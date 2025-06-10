@@ -1,9 +1,16 @@
 import json
+import re
+import sys
 import time
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 import requests
+
+sys.path.append(".")
+sys.path.append("./src")
+
+import config
 
 
 def get_current_model() -> Optional[Dict[str, Any]]:
@@ -11,7 +18,7 @@ def get_current_model() -> Optional[Dict[str, Any]]:
   获取当前加载的模型信息
   :return: 包含当前模型和可用模型列表的字典，如果发生错误则返回 None
   """
-  url = "http://192.168.2.18:8000/model"
+  url = f"{config.test_host}/model"
   try:
     response = requests.get(url)
     response.raise_for_status()
@@ -27,7 +34,7 @@ def switch_model(model_name: str) -> bool:
   :param model_name: 要切换到的模型名称
   :return: 切换是否成功
   """
-  url = f"http://192.168.2.18:8000/model/{model_name}"
+  url = f"{config.test_host}/model/{model_name}"
   try:
     response = requests.post(url)
     response.raise_for_status()
@@ -45,7 +52,7 @@ def perform_inference(input_data: List[float]) -> Optional[Dict[str, Any]]:
   :param input_data: 输入数据数组
   :return: 包含推理结果的字典，如果发生错误则返回 None
   """
-  url = "http://192.168.2.18:8000/inference"
+  url = f"{config.test_host}/inference"
   request_data = {"input_data": input_data}
 
   try:
@@ -105,7 +112,7 @@ def perform_multiple_inference(model_name: str, input_data: List[float], num_tes
   return inference_times
 
 
-if __name__ == "__main__":
+def main():
   # 获取当前模型信息
   model_info = get_current_model()
   if not model_info:
@@ -135,6 +142,10 @@ if __name__ == "__main__":
 
   # 测试所有模型
   for model_name in available_models:
+    if any(re.match(pattern, model_name) for pattern in config.skip_models):
+      print(f"跳过模型: {model_name}")
+      continue
+
     print(f"\n开始测试模型: {model_name}")
     inference_times = perform_multiple_inference(model_name, test_data)
 
@@ -154,7 +165,12 @@ if __name__ == "__main__":
   # 保存所有测试结果
   timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
   result_file = f"results/inference_results_{timestamp}.json"
+  all_results["test_host"] = config.test_host
   with open(result_file, "w", encoding="utf-8") as f:
     json.dump(all_results, f, ensure_ascii=False, indent=2)
 
   print(f"\n所有测试结果已保存到: {result_file}")
+
+
+if __name__ == "__main__":
+  main()
