@@ -1,4 +1,5 @@
 import json
+import os
 import re
 import sys
 import time
@@ -164,6 +165,10 @@ def main():
 
   # 保存所有测试结果
   timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+  if not os.path.exists("results"):
+    os.makedirs("results")
+
   result_file = f"results/inference_results_{timestamp}.json"
   all_results["test_host"] = config.test_host
   with open(result_file, "w", encoding="utf-8") as f:
