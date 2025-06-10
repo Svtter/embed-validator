@@ -4,7 +4,6 @@
 
 执行测试：
 
-````bash
+```bash
 PYTHONPATH=. uv run inference_client.py
 ```
-````
